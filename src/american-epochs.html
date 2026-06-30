@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>American Epochs — An Instrument</title>
+<style>
+  :root{
+    --paper:#E8EAE6;        /* cool archival paper */
+    --paper-2:#DFE2DD;      /* slightly deeper panel */
+    --ink:#1B1D1A;          /* near-black, warm */
+    --ink-soft:#5A5E58;     /* secondary text */
+    --ink-faint:#8A8E87;    /* tertiary / axis */
+    --rule:#C6C9C1;         /* hairlines */
+    --now:#B5503C;          /* RESERVED: standpoint + active selection only */
+    --argued:#7A746A;       /* interpretive ink */
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    /* epoch hues — equal weight, non-valenced */
+    --e1:#6B8E9E; --e2:#7FA07A; --e3:#B89B6E; --e4:#9E8AA8;
+    --e5:#6E9B96; --e6:#A98B7D; --e7:#8C8A9E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--mono);}
+  body{padding:22px clamp(14px,3vw,40px) 60px;}
+  ::selection{background:var(--now);color:var(--paper);}
+
+  header.masthead{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:6px;}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(26px,4.4vw,44px);line-height:1.02;margin:6px 0 4px;letter-spacing:-.01em;}
+  .dek{font-family:var(--serif);font-style:italic;color:var(--ink-soft);font-size:clamp(14px,1.6vw,17px);max-width:62ch;}
+
+  .controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:16px 0 6px;}
+  .ctl-group{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .ctl-label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-right:2px;}
+  button.toggle{font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;color:var(--ink);
+    background:transparent;border:1px solid var(--rule);padding:5px 10px;border-radius:2px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;transition:background .12s,border-color .12s;}
+  button.toggle:hover{border-color:var(--ink-soft);}
+  button.toggle .swatch{width:10px;height:10px;border-radius:1px;border:1px solid rgba(0,0,0,.18);}
+  button.toggle.off{color:var(--ink-faint);background:transparent;}
+  button.toggle.off .swatch{opacity:.28;}
+  button.toggle.on{background:var(--paper-2);border-color:var(--ink-soft);}
+  button.toggle[data-register="argued"] .swatch{background-image:repeating-linear-gradient(45deg,var(--argued) 0 2px,transparent 2px 4px);background-color:transparent;}
+
+  .mode-btn{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid var(--ink);background:transparent;color:var(--ink);padding:5px 11px;border-radius:2px;cursor:pointer;}
+  .mode-btn.active{background:var(--ink);color:var(--paper);}
+
+  .stage{position:relative;margin-top:8px;border-top:1px solid var(--rule);}
+  svg.chart{display:block;width:100%;height:auto;overflow:visible;}
+
+  /* chart text */
+  .ax-year{font-family:var(--mono);font-size:11px;fill:var(--ink-soft);}
+  .ax-year.major{fill:var(--ink);}
+  .epoch-name{font-family:var(--serif);font-size:13px;fill:var(--paper);font-weight:600;}
+  .epoch-name.dark{fill:var(--ink);}
+  .lane-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;fill:var(--ink-faint);}
+  .ev-label{font-family:var(--mono);font-size:10px;fill:var(--ink-soft);}
+  .pres-label{font-family:var(--mono);font-size:9.5px;fill:var(--paper);}
+  .crime-val{font-family:var(--mono);font-size:9px;fill:var(--ink-soft);}
+  .register-note{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;fill:var(--argued);}
+
+  .ev-dot{cursor:pointer;}
+  .epoch-region{cursor:pointer;}
+  .epoch-region:hover{filter:brightness(1.06);}
+
+  /* detail panel */
+  .detail{margin-top:18px;border-top:2px solid var(--ink);padding-top:14px;min-height:60px;}
+  .detail .d-eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);}
+  .detail h2{font-family:var(--serif);font-size:24px;margin:4px 0 2px;font-weight:600;}
+  .detail .d-years{font-family:var(--mono);font-size:12px;color:var(--now);letter-spacing:.04em;margin-bottom:10px;}
+  .detail .d-prose{font-family:var(--serif);font-size:15.5px;line-height:1.55;max-width:70ch;color:#2A2C28;}
+  .detail .d-prose p{margin:0 0 11px;}
+  .detail .d-meta{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:8px;}
+  .detail .placeholder{font-family:var(--serif);font-style:italic;color:var(--ink-faint);font-size:15px;}
+
+  .layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:22px;}
+  .card{border:1px solid var(--rule);border-radius:3px;padding:13px 14px;background:rgba(255,255,255,.18);}
+  .card h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px;color:var(--ink);
+    display:flex;align-items:center;gap:8px;}
+  .card h3 .tick{width:14px;height:14px;border:1px solid var(--ink);border-radius:2px;display:inline-grid;place-items:center;font-size:10px;}
+  .card.argued{border-style:dashed;background:repeating-linear-gradient(45deg,rgba(122,116,106,.06) 0 6px,transparent 6px 12px);}
+  .card p{font-family:var(--serif);font-size:13.5px;line-height:1.5;color:#34362F;margin:0 0 8px;}
+  .card .pred{font-family:var(--mono);font-size:11.5px;line-height:1.5;color:var(--ink-soft);border-left:2px solid var(--rule);padding-left:9px;margin:7px 0;}
+  .card .pred b{color:var(--ink);font-weight:600;}
+  .legend-reg{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+  .legend-reg span{display:inline-flex;align-items:center;gap:7px;}
+  .legend-reg .m-solid{width:22px;height:8px;background:var(--ink);}
+  .legend-reg .m-hatch{width:22px;height:8px;background:repeating-linear-gradient(45deg,var(--argued) 0 2px,transparent 2px 4px);border:1px dashed var(--argued);}
+
+  .foot{margin-top:26px;border-top:1px solid var(--rule);padding-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);line-height:1.6;max-width:90ch;}
+  .foot b{color:var(--ink-soft);}
+
+  .tooltip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--paper);
+    font-family:var(--mono);font-size:11px;padding:6px 9px;border-radius:3px;max-width:240px;line-height:1.4;
+    opacity:0;transition:opacity .1s;box-shadow:0 4px 14px rgba(0,0,0,.22);}
+  .tooltip .tt-yr{color:#E7B7AC;}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="kicker">A Periodization Instrument · 1939 – Present</div>
+  <h1>American Epochs</h1>
+  <div class="dek">Two legitimacy cycles, each rising to an apex and falling into crisis — laid over the empirical record so the labels can be tested against it, not just asserted over it.</div>
+</header>
+
+<div class="controls">
+  <div class="ctl-group" id="laneToggles">
+    <span class="ctl-label">Lanes</span>
+  </div>
+  <div class="ctl-group">
+    <span class="ctl-label">Mode</span>
+    <button class="mode-btn" id="stripBtn" title="Hide epoch names + RFT band. If the seam is real, you should still find it in the raw lanes.">Strip labels</button>
+  </div>
+</div>
+
+<div class="stage">
+  <svg class="chart" id="chart" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<div class="detail" id="detail">
+  <div class="d-eyebrow">Detail</div>
+  <div class="placeholder">Click an epoch band or an event marker to drill down. First click reveals the naming rationale; events and full justification expand from there.</div>
+</div>
+
+<div class="layers">
+  <div class="card">
+    <h3><span class="tick">✓</span> Reading the two registers</h3>
+    <p>Every mark on this chart is one of two kinds. Keeping them visually separate is the whole discipline: it stops an argument from borrowing the authority of a measurement.</p>
+    <div class="legend-reg">
+      <span><i class="m-solid"></i> Measured — counted, sourced</span>
+      <span><i class="m-hatch"></i> Argued — interpretive claim</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tick">⊙</span> Pre-registered predictions</h3>
+    <p>Written before judging the lanes, so the goalposts can't move after the ball lands.</p>
+    <div class="pred"><b>Nixon-inflection thesis:</b> if 1968–74 is where the field turns durably illiberal, the political/media lane should show a discontinuity there that the earlier lanes lack.</div>
+    <div class="pred"><b>Rival reading:</b> if illiberalism runs continuously back through Goldwater ’64 and the Dixiecrats, the same marks appear earlier — Nixon is productization, not origin.</div>
+    <div class="pred"><b>Recession ↔ crime null:</b> the easy story says downturns drive violent crime. The verified series predicts they barely track. Watch the crash of 2008 land inside a falling crime line.</div>
+  </div>
+
+  <div class="card argued">
+    <h3><span class="tick" style="border-style:dashed">≈</span> RFT lane — handle as argument</h3>
+    <p>The Truth / Power / Purpose regime band is <b>your thesis rendered as a mark</b>, not a measurement. It is hatched and off by default for exactly that reason. The honest question it holds open: is the political re-anchoring (Premodern) and the cultural dissolution (Postmodern) one rupture of the Modern settlement, or two?</p>
+  </div>
+</div>
+
+<div class="foot" id="sources"></div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/* ============================================================
+   DATA  — edit freely; the chart is built from these objects.
+   Each lane is independent so you can throw new ones in.
+   ============================================================ */
+
+const YEAR_MIN = 1939, YEAR_MAX = 2027, NOW = 2026;
+
+const EPOCHS = [
+  { id:'asc', name:'The American Ascendancy', start:1941, end:1952, lead:1939, color:'var(--e1)',
+    cycle:1, phase:'Rise',
+    oneliner:'Arsenal and creditor — hegemony accrues before the country is fully in the war.',
+    rationale:[
+      "“Ascendancy” over “hegemony” keeps the contingency: in 1941 Britain could fall, the Soviets could collapse. The ascent was real, the destination still uncertain.",
+      "1941 over 1945 is deliberate. Lend-Lease (March 1941) was the structural pivot — before a single American soldier died, the U.S. became creditor and arsenal of the Allied powers, and Britain began liquidating its empire to pay for materiel.",
+      "Bretton Woods (1944) only ratified what Lend-Lease created. Luce declared “The American Century” in February 1941, one month before Lend-Lease passed. He saw it coming; the isolationists saw it too, which is why they fought it."
+    ]},
+  { id:'aff', name:'The Affluent Society', start:1953, end:1965, color:'var(--e2)',
+    cycle:1, phase:'Apex',
+    oneliner:'Postwar plenty — the settlement achieves hegemony; the opposition accepts its terms.',
+    rationale:[
+      "Galbraith named it in 1958: the problem of production was solved; the question was now distribution and quality of life. Countercyclical Keynesianism worked, wages rose with productivity, the GI Bill built a middle class — the empirical basis of legitimacy.",
+      "1953 marks the moment the opposition party accepted the New Deal frame. Eisenhower built the Interstate system and left Social Security and the regulatory state intact. The settlement had won.",
+      "The endpoint is 1965 — the legislative apex (Voting Rights Act, Medicare/Medicaid). Yet that same August, Watts burned. The first crack appeared at the moment of greatest triumph."
+    ]},
+  { id:'unr', name:'The Unravelling', start:1966, end:1979, color:'var(--e3)',
+    cycle:1, phase:'Crisis',
+    oneliner:'A woven thing comes apart — each thread pulls loose another.',
+    rationale:[
+      "The postwar settlement was an interlocking system: Keynesian economics, Cold War bipartisanship, the labor-capital accord, incremental civil rights within the existing order. Each failure connected to the others.",
+      "1966 marks the turn. Carmichael’s “Black Power” (June) signals the civil-rights coalition fracturing; the same year brings the first major anti-war protests and the midterms that broke the Great Society majority.",
+      "1979 closes it because the next regime was already gestating. Volcker’s appointment (August 1979) — breaking inflation by inducing recession — abandoned full-employment Keynesianism before Reagan was elected. The policy regime changed first."
+    ]},
+  { id:'mor', name:'Morning in America', start:1980, end:1991, color:'var(--e4)',
+    cycle:2, phase:'Rise',
+    oneliner:'A new ideological order establishes legitimacy on different terms.',
+    rationale:[
+      "Using Reagan’s own slogan is pointed: it concedes Reaganism was a successful ideological project that restored confidence — and carries the irony that mornings end.",
+      "1980 was regime change after 48 years of New Deal governance. The question shifted from “how do we manage capitalism?” to “how do we unleash it?”",
+      "1991 closes with the Soviet collapse and the Gulf War’s display of unchallengeable supremacy. The settlement survived Reagan and proved transferable; Bush governed within it."
+    ]},
+  { id:'eoh', name:'The End of History', start:1992, end:2007, color:'var(--e5)',
+    cycle:2, phase:'Apex',
+    oneliner:'The ideological question declared settled — believed sincerely, by serious people, for fifteen years.',
+    rationale:[
+      "Fukuyama named it (1989/1992): liberal-democratic capitalism had no serious competitor; the Washington Consensus would spread, China would liberalize as it marketized.",
+      "Clinton’s 1992 win ratified that the Democrats accepted the Reagan settlement — “the era of big government is over,” triangulation, welfare reform, NAFTA — exactly as Eisenhower’s acceptance of the New Deal opened the Affluent Society.",
+      "Why 2007, not 2008? The confidence died before the crisis. Iraq had soured, Katrina exposed state incapacity, housing peaked in 2006. 2008 was the corpse hitting the floor."
+    ]},
+  { id:'int', name:'The Interregnum', start:2008, end:2015, color:'var(--e6)',
+    cycle:2, phase:'Crisis',
+    oneliner:'The old is dying and the new cannot be born; morbid symptoms appear.',
+    rationale:[
+      "Gramsci’s word. The neoliberal order demonstrably failed — bailouts for banks, foreclosures for homeowners made the class politics undeniable — yet nothing replaced it.",
+      "Obama governed the aftermath without founding a new regime: stimulus too small, no structural reform, no new framework. The Tea Party and Occupy were mirror-image symptoms of the same vacuum.",
+      "2015 marks the emergence: Trump’s campaign announcement (June) signals a morbid symptom becoming a political force. The interregnum was ending — into what remained unclear."
+    ]},
+  { id:'rec', name:'The Reckoning', start:2016, end:NOW, color:'var(--e7)', open:true,
+    cycle:2, phase:'Crisis',
+    oneliner:'Debts coming due — an accounting that can no longer be deferred.',
+    rationale:[
+      "Deindustrialization’s social costs (deferred since the ’80s), racial-caste contradictions (since the Founding), legitimacy deficits (since Watergate), imperial overextension (since 2003). The bill arrived.",
+      "Trump became the vehicle precisely by repudiating the bipartisan consensus that deferred these debts. The 2016 win — against both establishments, against polling, against elite opposition — proved the interregnum had produced something.",
+      "“Present” concedes we are inside the period, too close to see its shape. Whether January 2025 inaugurates a new settlement or intensifies the crisis remains to be seen — so this end of the chart is drawn open, not closed."
+    ]},
+];
+
+// Events: type 'point' (single year) or 'span' (start..end). Matches your dot / joined-dot vocabulary.
+const EVENTS = [
+  { y:1941, label:'Lend-Lease', note:'The structural pivot — U.S. becomes creditor & arsenal.' },
+  { y:1941, label:'Pearl Harbor' },
+  { y:1941, end:1945, label:'World War II', span:true },
+  { y:1944, label:'Bretton Woods' },
+  { y:1945, label:'Hiroshima' },
+  { y:1948, label:'Marshall Plan' },
+  { y:1954, label:'Brown v. Board' },
+  { y:1956, label:'Interstate Highways' },
+  { y:1964, label:'Civil Rights Act' },
+  { y:1965, label:'Voting Rights Act', note:'Legislative apex of the consensus.' },
+  { y:1965, label:'Watts burns', note:'First crack, at the moment of triumph.' },
+  { y:1966, label:'“Black Power”' },
+  { y:1968, label:'MLK & RFK killed' },
+  { y:1968, label:'Tet Offensive' },
+  { y:1972, end:1974, label:'Watergate', span:true },
+  { y:1973, end:1979, label:'Stagflation', span:true, note:'“It’s just not The Unravelling without stagflation.”' },
+  { y:1975, label:'Fall of Saigon' },
+  { y:1979, label:'Volcker to Fed', note:'Policy regime changes before the election.' },
+  { y:1980, label:'Reagan elected' },
+  { y:1981, label:'PATCO broken' },
+  { y:1989, label:'Berlin Wall falls' },
+  { y:1991, label:'Soviet collapse' },
+  { y:1994, label:'NAFTA' },
+  { y:1996, label:'Welfare reform' },
+  { y:2001, label:'9/11' },
+  { y:2003, end:2011, label:'Iraq War', span:true },
+  { y:2005, label:'Katrina' },
+  { y:2008, label:'Lehman / TARP', note:'The corpse hits the floor.' },
+  { y:2010, label:'Tea Party wave' },
+  { y:2011, label:'Occupy' },
+  { y:2016, label:'Trump elected' },
+  { y:2017, label:'Charlottesville' },
+  { y:2020, end:2021, label:'COVID-19', span:true },
+  { y:2021, label:'January 6' },
+  { y:2024, label:'Trump re-elected' },
+];
+
+// Presidents (measured). Party kept as neutral label, not red/blue valence.
+const PRESIDENTS = [
+  { name:'F. Roosevelt', start:1939, end:1945, p:'D' },
+  { name:'Truman', start:1945, end:1953, p:'D' },
+  { name:'Eisenhower', start:1953, end:1961, p:'R' },
+  { name:'Kennedy', start:1961, end:1963, p:'D' },
+  { name:'Johnson', start:1963, end:1969, p:'D' },
+  { name:'Nixon', start:1969, end:1974, p:'R' },
+  { name:'Ford', start:1974, end:1977, p:'R' },
+  { name:'Carter', start:1977, end:1981, p:'D' },
+  { name:'Reagan', start:1981, end:1989, p:'R' },
+  { name:'Bush', start:1989, end:1993, p:'R' },
+  { name:'Clinton', start:1993, end:2001, p:'D' },
+  { name:'Bush', start:2001, end:2009, p:'R' },
+  { name:'Obama', start:2009, end:2017, p:'D' },
+  { name:'Trump', start:2017, end:2021, p:'R' },
+  { name:'Biden', start:2021, end:2025, p:'D' },
+  { name:'Trump', start:2025, end:NOW, p:'R' },
+];
+
+// NBER recessions (measured). Well-established peak→trough spans, year-rounded.
+const RECESSIONS = [
+  {start:1945,end:1945},{start:1948,end:1949},{start:1953,end:1954},{start:1957,end:1958},
+  {start:1960,end:1961},{start:1969,end:1970},{start:1973,end:1975},{start:1980,end:1980},
+  {start:1981,end:1982},{start:1990,end:1991},{start:2001,end:2001},{start:2007,end:2009},
+  {start:2020,end:2020},
+];
+
+// Violent crime rate per 100k — VERIFIED WAYPOINTS ONLY (FBI UCR / CRS R45236).
+// Full annual series pending ingestion; line between points is a guide, not year-exact.
+const CRIME = [
+  {y:1960, v:160.9, verified:true},
+  {y:1991, v:758.2, verified:true, peak:true},   // post-1960 high (CRS)
+  {y:2014, v:361.6, verified:true},
+  {y:2015, v:373.7, verified:true},
+  {y:2016, v:386.3, verified:true},
+  {y:2019, v:366.7, verified:true},
+];
+
+// RFT regime — ARGUED. Editable interpretive band. Off by default.
+const RFT = [
+  { label:'Modern settlement', start:1941, end:1968, note:'Truth bound to Power under a shared Purpose.' },
+  { label:'Premodern re-anchoring', start:1968, end:NOW, note:'Power eats Truth; winning becomes the end. (Thesis: begins with Nixon-era illiberalism — or earlier?)' },
+];
+
+/* ============================================================
+   STATE + GEOMETRY
+   ============================================================ */
+const lanes = {
+  presidents:{on:true,  label:'Presidents', register:'measured', color:'var(--ink-soft)'},
+  recessions:{on:true,  label:'Recessions', register:'measured', color:'var(--ink)'},
+  crime:{on:true,       label:'Violent crime', register:'measured', color:'var(--ink)'},
+  rft:{on:false,        label:'RFT regime',  register:'argued',   color:'var(--argued)'},
+};
+let stripped = false;
+let selected = null;
+
+const SVGNS='http://www.w3.org/2000/svg';
+const chart=document.getElementById('chart');
+const tooltip=document.getElementById('tooltip');
+
+function el(tag,attrs={},parent=null){
+  const n=document.createElementNS(SVGNS,tag);
+  for(const k in attrs) n.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(n);
+  return n;
+}
+function txt(s,attrs={},parent=null){
+  const n=el('text',attrs,parent); n.textContent=s; return n;
+}
+
+let W=1000;
+function xOf(year){
+  const padL=8, padR=8;
+  return padL + ( (year-YEAR_MIN)/(YEAR_MAX-YEAR_MIN) ) * (W - padL - padR);
+}
+
+/* ---- tooltip ---- */
+function showTip(html,e){
+  tooltip.innerHTML=html; tooltip.style.opacity=1;
+  const pad=14;
+  let x=e.clientX+pad, y=e.clientY+pad;
+  const r=tooltip.getBoundingClientRect();
+  if(x+r.width>window.innerWidth-8) x=e.clientX-r.width-pad;
+  if(y+r.height>window.innerHeight-8) y=e.clientY-r.height-pad;
+  tooltip.style.left=x+'px'; tooltip.style.top=y+'px';
+}
+function hideTip(){ tooltip.style.opacity=0; }
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  W = chart.clientWidth || chart.parentNode.clientWidth || 1000;
+  while(chart.firstChild) chart.removeChild(chart.firstChild);
+
+  // vertical band allocation
+  const evTop=14, evH=150;                 // events above the axis
+  const axisY=evTop+evH;                   // the spine
+  let y=axisY+34;                          // running cursor below axis
+
+  const epochY=y, epochH=46; y+=epochH+10;
+
+  const laneBlocks=[];
+  if(lanes.presidents.on){ laneBlocks.push({key:'presidents',y, h:26}); y+=26+8; }
+  if(lanes.recessions.on){ laneBlocks.push({key:'recessions',y, h:20}); y+=20+8; }
+  if(lanes.crime.on){      laneBlocks.push({key:'crime',y, h:96});       y+=96+8; }
+  if(lanes.rft.on){        laneBlocks.push({key:'rft',y, h:30});         y+=30+8; }
+
+  const H=y+10;
+  chart.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  chart.setAttribute('height',H);
+
+  drawEvents(evTop,evH,axisY);
+  drawAxis(axisY);
+  drawEpochs(epochY,epochH);
+  laneBlocks.forEach(b=>{
+    if(b.key==='presidents') drawPresidents(b.y,b.h);
+    if(b.key==='recessions') drawRecessions(b.y,b.h);
+    if(b.key==='crime')      drawCrime(b.y,b.h);
+    if(b.key==='rft')        drawRFT(b.y,b.h);
+  });
+  drawNow(evTop, H);
+}
+
+/* ---- the spine + year ticks ---- */
+function drawAxis(axisY){
+  el('line',{x1:xOf(YEAR_MIN),y1:axisY,x2:xOf(YEAR_MAX),y2:axisY,stroke:'var(--ink)','stroke-width':1.5},chart);
+  for(let yr=1940; yr<=2020; yr+=10){
+    const x=xOf(yr);
+    el('line',{x1:x,y1:axisY-5,x2:x,y2:axisY+5,stroke:'var(--ink)','stroke-width':1},chart);
+    txt(yr,{x:x,y:axisY+19,'text-anchor':'middle',class:'ax-year major'},chart);
+  }
+  for(let yr=1945; yr<=2025; yr+=10){
+    const x=xOf(yr);
+    el('line',{x1:x,y1:axisY-3,x2:x,y2:axisY+3,stroke:'var(--ink-faint)','stroke-width':1},chart);
+  }
+}
+
+/* ---- epoch band (below axis) with soft bleeds + lead-in nub ---- */
+function drawEpochs(top,h){
+  // defs for bleed gradients
+  let defs=chart.querySelector('defs'); if(!defs){ defs=el('defs',{},chart); }
+  EPOCHS.forEach((ep,i)=>{
+    const x0=xOf(ep.lead!=null?ep.lead:ep.start);
+    const x1=xOf(ep.open?NOW:ep.end+1);
+    const wseg=x1-x0;
+
+    // lead-in nub (the "not a light switch" bleed) rendered as faded leading slice
+    if(ep.lead!=null){
+      const nx0=xOf(ep.lead), nx1=xOf(ep.start);
+      el('rect',{x:nx0,y:top,width:Math.max(0,nx1-nx0),height:h,fill:ep.color,opacity:.30},chart);
+    }
+
+    const g=el('g',{class:'epoch-region'},chart);
+    const startX = ep.lead!=null?xOf(ep.start):x0;
+    const r=el('rect',{x:startX,y:top,width:Math.max(0,x1-startX),height:h,fill:ep.color,
+      opacity: stripped?.55:.92},g);
+
+    // open right edge for The Reckoning: dissolve into uncertainty
+    if(ep.open){
+      const fadeId='fade'+i;
+      const lg=el('linearGradient',{id:fadeId,x1:'0',x2:'1',y1:'0',y2:'0'},defs);
+      el('stop',{offset:'0%','stop-color':ep.color,'stop-opacity': stripped?.55:.92},lg);
+      el('stop',{offset:'62%','stop-color':ep.color,'stop-opacity': stripped?.55:.92},lg);
+      el('stop',{offset:'100%','stop-color':ep.color,'stop-opacity':0},lg);
+      r.setAttribute('fill',`url(#${fadeId})`);
+      r.setAttribute('width', xOf(YEAR_MAX)-startX);
+    }
+
+    // soft seam between adjacent epochs (overlapping feather)
+    if(i>0){
+      const seamId='seam'+i;
+      const lg=el('linearGradient',{id:seamId,x1:'0',x2:'1',y1:'0',y2:'0'},defs);
+      el('stop',{offset:'0%','stop-color':EPOCHS[i-1].color,'stop-opacity':.0},lg);
+      el('stop',{offset:'50%','stop-color':EPOCHS[i-1].color,'stop-opacity':.5},lg);
+      el('stop',{offset:'100%','stop-color':ep.color,'stop-opacity':.0},lg);
+      const sW=Math.min(16, wseg*0.4);
+      el('rect',{x:startX-sW/2,y:top,width:sW,height:h,fill:`url(#${seamId})`},chart);
+    }
+
+    if(!stripped){
+      const cx=(startX + (ep.open?xOf(NOW):x1))/2;
+      const dark = ep.color==='var(--e3)'; // ochre needs dark text
+      txt(ep.name,{x:cx,y:top+h/2-2,'text-anchor':'middle','dominant-baseline':'middle',
+        class:'epoch-name'+(dark?' dark':'')},chart);
+      txt((ep.open?ep.start+'–present':ep.start+'–'+ep.end),
+        {x:cx,y:top+h/2+13,'text-anchor':'middle',class:'epoch-name'+(dark?' dark':''),
+         style:'font-family:var(--mono);font-size:9.5px;font-weight:400;opacity:.85'},chart);
+    }
+
+    // selection ring
+    if(selected&&selected.type==='epoch'&&selected.id===ep.id){
+      el('rect',{x:startX,y:top-3,width:Math.max(0,(ep.open?xOf(NOW):x1)-startX),height:h+6,
+        fill:'none',stroke:'var(--now)','stroke-width':2},chart);
+    }
+
+    g.addEventListener('click',()=>selectEpoch(ep));
+    g.addEventListener('mousemove',e=>showTip(`<span class="tt-yr">${ep.start}–${ep.open?'now':ep.end}</span> · ${ep.name}<br>${ep.oneliner}`,e));
+    g.addEventListener('mouseleave',hideTip);
+  });
+}
+
+/* ---- events above the axis, with anti-collision label stacking ---- */
+function drawEvents(top,h,axisY){
+  const baseY=top+h-6;               // dots sit just above the axis
+  const rowH=22, maxRows=5;
+  const rowEndX=new Array(maxRows).fill(-1e9);
+  const charW=6.0, fs=10;
+
+  const sorted=[...EVENTS].sort((a,b)=>a.y-b.y);
+  sorted.forEach(ev=>{
+    const x=xOf(ev.y);
+    const labelW=ev.label.length*charW+10;
+    // pick lowest row whose last label end is clear
+    let row=0;
+    for(;row<maxRows;row++){ if(x-labelW/2 > rowEndX[row]+6) break; }
+    if(row===maxRows) row=maxRows-1;
+    rowEndX[row]=x+labelW/2;
+    const labelY=baseY-14-row*rowH;
+
+    // span bar
+    if(ev.span){
+      const x2=xOf(ev.end);
+      el('line',{x1:x,y1:baseY,x2:x2,y2:baseY,stroke:'var(--ink-soft)','stroke-width':2.5,'stroke-linecap':'round'},chart);
+      el('circle',{cx:x2,cy:baseY,r:3,fill:'var(--ink-soft)'},chart);
+    }
+    // leader
+    el('line',{x1:x,y1:baseY-4,x2:x,y2:labelY+3,stroke:'var(--rule)','stroke-width':1},chart);
+    // dot
+    const dot=el('circle',{cx:x,cy:baseY,r:4,fill:'var(--ink)',class:'ev-dot'},chart);
+    // label
+    const t=txt(ev.label,{x:x,y:labelY,'text-anchor':'middle',class:'ev-label'},chart);
+
+    const handler=e=>showTip(`<span class="tt-yr">${ev.y}${ev.span?'–'+ev.end:''}</span> · ${ev.label}${ev.note?'<br>'+ev.note:''}`,e);
+    [dot,t].forEach(node=>{
+      node.style.cursor='pointer';
+      node.addEventListener('mousemove',handler);
+      node.addEventListener('mouseleave',hideTip);
+      node.addEventListener('click',()=>selectEvent(ev));
+    });
+  });
+}
+
+/* ---- presidents ribbon ---- */
+function drawPresidents(top,h){
+  txt('Presidents',{x:xOf(YEAR_MIN),y:top-4,class:'lane-tag'},chart);
+  PRESIDENTS.forEach(pr=>{
+    const x0=xOf(pr.start), x1=xOf(pr.end);
+    const tone = pr.p==='R' ? '#9A9C95' : '#74766F'; // neutral two-tone, no partisan red/blue
+    el('rect',{x:x0,y:top,width:Math.max(1,x1-x0),height:h,fill:tone,stroke:'var(--paper)','stroke-width':1},chart);
+    if(x1-x0>46){
+      txt(pr.name,{x:(x0+x1)/2,y:top+h/2+3,'text-anchor':'middle',class:'pres-label'},chart);
+    }
+  });
+}
+
+/* ---- recession bands ---- */
+function drawRecessions(top,h){
+  txt('Recessions · NBER',{x:xOf(YEAR_MIN),y:top-4,class:'lane-tag'},chart);
+  el('line',{x1:xOf(YEAR_MIN),y1:top+h,x2:xOf(YEAR_MAX),y2:top+h,stroke:'var(--rule)','stroke-width':1},chart);
+  RECESSIONS.forEach(r=>{
+    const x0=xOf(r.start), x1=xOf(r.end+1);
+    el('rect',{x:x0,y:top,width:Math.max(2,x1-x0),height:h,fill:'var(--ink)',opacity:.78},chart);
+  });
+}
+
+/* ---- crime line (verified waypoints) ---- */
+function drawCrime(top,h){
+  txt('Violent crime / 100k · verified waypoints',{x:xOf(YEAR_MIN),y:top-4,class:'lane-tag'},chart);
+  const vmax=800;
+  const yOf=v=> top+h - (v/vmax)*h;
+  // baseline + peak guide
+  el('line',{x1:xOf(YEAR_MIN),y1:top+h,x2:xOf(YEAR_MAX),y2:top+h,stroke:'var(--rule)','stroke-width':1},chart);
+  const pts=[...CRIME].sort((a,b)=>a.y-b.y);
+  // connecting guide (dashed = shape between verified points, not year-exact)
+  let d='';
+  pts.forEach((p,i)=>{ d+=(i?'L':'M')+xOf(p.y)+' '+yOf(p.v)+' '; });
+  el('path',{d,fill:'none',stroke:'var(--ink)','stroke-width':1.4,'stroke-dasharray':'2 3',opacity:.6},chart);
+  pts.forEach(p=>{
+    const cx=xOf(p.y), cy=yOf(p.v);
+    el('circle',{cx,cy,r:3.5,fill:p.peak?'var(--now)':'var(--ink)'},chart);
+    txt(p.v.toFixed(0),{x:cx,y:cy-7,'text-anchor':'middle',class:'crime-val'},chart);
+    txt(p.y,{x:cx,y:top+h+11,'text-anchor':'middle',class:'crime-val'},chart);
+  });
+  txt('peak 758 (1991) → falls through the ’08 crash',{x:xOf(1996),y:top+10,'text-anchor':'middle',class:'register-note',style:'fill:var(--ink-faint)'},chart);
+}
+
+/* ---- RFT regime (argued, hatched) ---- */
+function drawRFT(top,h){
+  // hatch pattern
+  let defs=chart.querySelector('defs'); if(!defs){ defs=el('defs',{},chart); }
+  if(!chart.querySelector('#hatch')){
+    const pat=el('pattern',{id:'hatch',width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+    el('rect',{width:6,height:6,fill:'var(--paper)'},pat);
+    el('line',{x1:0,y1:0,x2:0,y2:6,stroke:'var(--argued)','stroke-width':2},pat);
+  }
+  txt('RFT regime · ARGUED — not measured',{x:xOf(YEAR_MIN),y:top-4,class:'lane-tag',style:'fill:var(--argued)'},chart);
+  RFT.forEach(seg=>{
+    const x0=xOf(seg.start), x1=xOf(seg.end+ (seg.end===NOW?0:1));
+    el('rect',{x:x0,y:top,width:Math.max(2,x1-x0),height:h,fill:'url(#hatch)',stroke:'var(--argued)',
+      'stroke-width':1,'stroke-dasharray':'4 3'},chart);
+    txt(seg.label,{x:(x0+x1)/2,y:top+h/2+3,'text-anchor':'middle',
+      style:'font-family:var(--serif);font-size:11px;fill:var(--argued);font-style:italic'},chart)
+      .addEventListener('mousemove',e=>showTip('<span class="tt-yr">ARGUED</span> · '+seg.label+'<br>'+seg.note,e));
+  });
+}
+
+/* ---- the standpoint marker: YOU ARE HERE ---- */
+function drawNow(top,bottom){
+  const x=xOf(NOW);
+  el('line',{x1:x,y1:top-4,x2:x,y2:bottom-8,stroke:'var(--now)','stroke-width':1.5,'stroke-dasharray':'3 3'},chart);
+  txt('2026 · the vantage point',{x:x-6,y:top+4,'text-anchor':'end',
+    style:'font-family:var(--mono);font-size:9.5px;fill:var(--now);letter-spacing:.06em'},chart);
+}
+
+/* ============================================================
+   SELECTION / DETAIL PANEL
+   ============================================================ */
+const detail=document.getElementById('detail');
+function selectEpoch(ep){
+  selected={type:'epoch',id:ep.id};
+  const evs=EVENTS.filter(e=> e.y>=ep.start && e.y<=(ep.open?NOW:ep.end));
+  detail.innerHTML=`
+    <div class="d-eyebrow">Cycle ${ep.cycle} · ${ep.phase}</div>
+    <h2>${ep.name}</h2>
+    <div class="d-years">${ep.open?ep.start+' – present':ep.start+' – '+ep.end}</div>
+    <div class="d-prose">${ep.rationale.map(p=>'<p>'+p+'</p>').join('')}</div>
+    <div class="d-meta">Defining events in view: ${evs.map(e=>e.label).join(' · ')}</div>`;
+  render();
+  detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function selectEvent(ev){
+  selected={type:'event',y:ev.y};
+  const ep=EPOCHS.find(e=> ev.y>=e.start && ev.y<=(e.open?NOW:e.end));
+  detail.innerHTML=`
+    <div class="d-eyebrow">Event${ev.span?' · span':''}</div>
+    <h2>${ev.label}</h2>
+    <div class="d-years">${ev.y}${ev.span?' – '+ev.end:''}${ep?' · within '+ep.name:''}</div>
+    <div class="d-prose"><p>${ev.note?ev.note:'A defining event of this epoch. (Annotate freely — this panel reads the <code>note</code> field on each event.)'}</p></div>`;
+  render();
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+const tg=document.getElementById('laneToggles');
+Object.entries(lanes).forEach(([key,l])=>{
+  const b=document.createElement('button');
+  b.className='toggle '+(l.on?'on':'off');
+  if(l.register==='argued') b.dataset.register='argued';
+  b.innerHTML=`<span class="swatch" style="background:${l.register==='argued'?'transparent':l.color}"></span>${l.label}`;
+  b.addEventListener('click',()=>{ l.on=!l.on; b.classList.toggle('on'); b.classList.toggle('off'); render(); });
+  tg.appendChild(b);
+});
+
+const stripBtn=document.getElementById('stripBtn');
+stripBtn.addEventListener('click',()=>{
+  stripped=!stripped; stripBtn.classList.toggle('active',stripped);
+  stripBtn.textContent = stripped?'Show labels':'Strip labels';
+  render();
+});
+
+document.getElementById('sources').innerHTML=
+  `<b>Sources & honesty notes.</b> Epoch names, dates, and justifications: your “American Epochs” framework. `+
+  `Presidents and NBER recession spans: established record (year-rounded). `+
+  `Violent crime: FBI UCR / Congressional Research Service R45236 — <b>verified waypoints only</b> `+
+  `(1960·161, 1991·758 peak, 2014·362, 2015·374, 2016·386, 2019·367); the dashed connector is shape between points, not a year-exact series. `+
+  `The RFT regime lane is <b>argued, not measured</b>, and is drawn hatched for that reason. `+
+  `Pre-registered predictions are fixed above so the chart can disconfirm, not just confirm.`;
+
+window.addEventListener('resize',()=>{ clearTimeout(window.__rt); window.__rt=setTimeout(render,120); });
+render();
+</script>
+</body>
+</html>
